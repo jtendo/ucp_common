@@ -5,10 +5,6 @@
 -include("ucp_syntax.hrl").
 -include("logger.hrl").
 
--ifdef(TEST).
--compile([export_all]).
--endif.
-
 -export([
          to_7bit/1,
          encode_sender/1,
@@ -30,15 +26,6 @@
          hexstr_to_bin/1,
          hexstr_to_list/1]).
 
--define(STX, 16#02).
--define(ETX, 16#03).
--define(MIN_MESSAGE_TRN, 0).
--define(MAX_MESSAGE_TRN, 99).
--define(MIN_MESSAGE_REF, 0).
--define(MAX_MESSAGE_REF, 255).
--define(UCP_HEADER_LEN, 13).
--define(UCP_CHECKSUM_LEN, 2).
--define(UCP_SEPARATOR, $/).
 
 %%--------------------------------------------------------------------
 %% @doc

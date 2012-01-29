@@ -1,3 +1,4 @@
+-include("ucp_const.hrl").
 -record(ucp_header, {
           trn = "00",
           %% Transaction reference number, right justified with leading zero.
@@ -203,3 +204,4 @@
           ack = "A", %% Positive acknowledgement Char A
           sm = "" %% System message , String
          }).
+

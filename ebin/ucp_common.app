@@ -1,6 +1,0 @@
-{application,ucp_common,
-             [{description,"UCP tools"},
-              {vsn,"1"},
-              {registered,[]},
-              {applications,[kernel,stdlib]},
-              {modules,[ucp_7bit,ucp_ira,ucp_utils]}]}.
