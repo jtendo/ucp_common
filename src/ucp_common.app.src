@@ -3,4 +3,4 @@
               {vsn,"1"},
               {registered,[]},
               {applications,[kernel,stdlib]},
-              {modules,[ucp_7bit, ucp_ira, ucp_utils]}]}.
+              {modules,[ucp_7bit, ucp_ira, ucp_utils, ucp_framing]}]}.
