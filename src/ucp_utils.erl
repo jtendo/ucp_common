@@ -371,7 +371,7 @@ encode_reverse(L) ->
 encode_reverse([], Acc) ->
     lists:reverse(Acc);
 encode_reverse([A|[]], Acc) ->
-    encode_reverse([], [$F, A | Acc]);
+    encode_reverse([], [A, $F | Acc]);
 encode_reverse([A, B|T], Acc) ->
     encode_reverse(T, [A, B | Acc]).
 
