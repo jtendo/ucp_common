@@ -46,10 +46,8 @@ try_decode(Incoming, Buffered) when is_binary(Incoming) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 try_decode(<<>>, Buffer, Collected) ->
-    IOL_Col = lists:reverse(Collected),
-    IOL_Buf = lists:reverse(Buffer),
-    {lists:map(fun iolist_to_binary/1, IOL_Col),
-     lists:map(fun iolist_to_binary/1, IOL_Buf)};
+    {[iolist_to_binary(Io) || Io <- lists:reverse(Collected)],
+        [iolist_to_binary(Io) || Io <- lists:reverse(Buffer)]};
 
 try_decode(Incoming, Buffer, Collected) ->
     case binary:split(Incoming, <<?END>>) of
