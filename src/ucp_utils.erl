@@ -19,7 +19,8 @@
          decode_message/1,
          parse_body/2,
          wrap/1,
-         encode_reverse/1
+         encode_reverse/1,
+         decode_reverse/1
         ]).
 
 -export([to_hexstr/1,
@@ -363,7 +364,7 @@ to_hexstr(unicode, Int) when is_integer(Int) ->
     string:right(integer_to_list(Int, 16), 4, $0).
 
 %%--------------------------------------------------------------------
-%% Reverse nibble encoding
+%% Reverse nibble encoding/decoding
 %%--------------------------------------------------------------------
 encode_reverse(L) ->
     encode_reverse(L, []).
@@ -374,6 +375,16 @@ encode_reverse([A|[]], Acc) ->
     encode_reverse([], [A, $F | Acc]);
 encode_reverse([A, B|T], Acc) ->
     encode_reverse(T, [A, B | Acc]).
+
+decode_reverse(L) ->
+    decode_reverse(L, []).
+
+decode_reverse([], Acc) ->
+    lists:reverse(Acc);
+decode_reverse([$F, A], Acc) ->
+    decode_reverse([], [A | Acc]);
+decode_reverse([A, B|T], Acc) ->
+    decode_reverse(T, [A, B | Acc]).
 
 %%--------------------------------------------------------------------
 %% Eunit tests
@@ -413,5 +424,13 @@ encode_sender_test() ->
         encode_sender("!@#$%^&*()-=+[]{}\\/.,:")),
     ?assertEqual("!@#$%^&*()-=+[]{}\\/.,:", decode_sender("5039",
         "2721E08854F29A54A854ABB7DA76F77DEECBC5D201")).
+
+encode_reverse_test() ->
+    ?assertEqual("84214365", encode_reverse("48123456")),
+    ?assertEqual("84214365F7", encode_reverse("481234567")).
+
+decode_reverse_test() ->
+    ?assertEqual("48123456", decode_reverse("84214365")),
+    ?assertEqual("481234567", decode_reverse("84214365F7")).
 
 -endif.
