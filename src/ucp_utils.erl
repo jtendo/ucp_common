@@ -25,7 +25,9 @@
 
 -export([to_hexstr/1,
          hexstr_to_bin/1,
-         hexstr_to_list/1]).
+         hexstr_to_bin/2,
+         hexstr_to_list/1,
+         hexstr_to_list/2]).
 
 
 %%--------------------------------------------------------------------
@@ -351,17 +353,29 @@ to_hexstr(L) when is_list(L) ->
           end,
     lists:flatten([to_hexstr(Type, X) || X <- L]).
 
-hexstr_to_bin(H) ->
-    <<<<(erlang:list_to_integer([X], 16)):4>> || X <- H>>.
-
-hexstr_to_list(H) ->
-    binary_to_list(hexstr_to_bin(H)).
-
 to_hexstr(ascii, Int) when is_integer(Int) ->
     string:right(integer_to_list(Int, 16), 2, $0);
 
 to_hexstr(unicode, Int) when is_integer(Int) ->
     string:right(integer_to_list(Int, 16), 4, $0).
+
+hexstr_to_bin(H) ->
+    hexstr_to_bin(H, 2).
+
+hexstr_to_bin(H, Chunk) ->
+    erlang:list_to_binary(hexstr_to_list(H, Chunk)).
+
+hexstr_to_list(H) ->
+    hexstr_to_list(H, 2).
+
+hexstr_to_list(H, Chunk) ->
+    hexstr_to_list(H, Chunk, []).
+
+hexstr_to_list([], _Chunk, Acc) ->
+    lists:reverse(Acc);
+hexstr_to_list(H, Chunk, Acc) ->
+    {L, R} = lists:split(Chunk, H),
+    hexstr_to_list(R, Chunk, [erlang:list_to_integer(L, 16) | Acc]).
 
 %%--------------------------------------------------------------------
 %% Reverse nibble encoding/decoding
@@ -432,5 +446,19 @@ encode_reverse_test() ->
 decode_reverse_test() ->
     ?assertEqual("48123456", decode_reverse("84214365")),
     ?assertEqual("481234567", decode_reverse("84214365F7")).
+
+list_to_hex_test() ->
+    ?assertEqual("5468697320697320612073696D706C652074657374", to_hexstr("This is a simple test")),
+    ?assertEqual("01420105006B0061", to_hexstr([322,261,107,97])). % unicode:characters_to_list("łąka")
+
+hexstr_to_list_test() ->
+    ?assertEqual("This is a simple test", hexstr_to_list("5468697320697320612073696D706C652074657374")),
+    ?assertEqual([322,261,107,97], hexstr_to_list("01420105006B0061", 4)).
+
+bin_to_hex_test() ->
+    ?assertEqual("7922125A3411", to_hexstr(<<121, 34, 18, 90, 52, 17>>)).
+
+hexstr_to_bin_test() ->
+    ?assertEqual(<<121, 34, 18, 90, 52, 17>>, hexstr_to_bin("7922125A3411")).
 
 -endif.
