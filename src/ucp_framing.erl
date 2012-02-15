@@ -58,7 +58,7 @@ try_decode(Incoming, Buffer, Collected) ->
             %% one message decoded, try remaining
             try_decode(R, Buffer, [[M, ?END]|Collected]);
         [Incomplete] ->
-            %% apparently packet fragmenting occured;
+            %% apparently packet fragmentation occured;
             %% we can't handle that, so make it go to the buffer
             try_decode(<<>>, [Incomplete|Buffer], Collected);
         [Incomplete, More] ->
