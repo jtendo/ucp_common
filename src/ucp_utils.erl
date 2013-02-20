@@ -5,6 +5,10 @@
 -include("ucp_syntax.hrl").
 -include("logger.hrl").
 
+-include_lib("proper/include/proper.hrl").
+
+-define(MAX_OTOA_LENGTH, 11).
+
 -export([
          to_7bit/1,
          encode_sender/1,
@@ -38,11 +42,15 @@
 %% @spec to_7bit(String) -> String
 %% @end
 %%--------------------------------------------------------------------
+-spec to_7bit(list()) -> list().
 to_7bit(Str) -> binary:bin_to_list(ucp_7bit:to_7bit(Str)).
 
 %%--------------------------------------------------------------------
 %% Function for calculating UCP OAdC field for string and returns list
 %%--------------------------------------------------------------------
+-spec encode_sender(list()) -> {list(), list()}.
+encode_sender(Sender) when length(Sender) > ?MAX_OTOA_LENGTH ->
+    encode_sender(lists:sublist(Sender, ?MAX_OTOA_LENGTH));
 encode_sender(Sender) ->
     % TODO: detect international number and set OTOA: 1139
     case has_only_digits(Sender) of
@@ -53,6 +61,7 @@ encode_sender(Sender) ->
                     to_hexstr(to_7bit(ucp_ira:to(ira, Sender))))}
     end.
 
+-spec decode_sender(list(), list()) -> list().
 decode_sender(OTOA, OAdC) ->
     case OTOA of
         "5039" ->
@@ -62,6 +71,17 @@ decode_sender(OTOA, OAdC) ->
         _Other ->
            OAdC
     end.
+
+-type ascii() :: [32..126].
+ascii() -> list(range(32, 126)).
+
+prop_encode_decode_sender() ->
+    ?FORALL(X, ascii(),
+            begin
+            {A, B} = encode_sender(X),
+            Y = decode_sender(A, B),
+            X =:= Y
+        end).
 
 create_message(TRN, CmdId, Body) ->
     NewTRN = get_next_trn(TRN),
@@ -89,18 +109,15 @@ compose_message(Header, Body) ->
 %%--------------------------------------------------------------------
 %% Function for appending list length to beginning of the list
 %%--------------------------------------------------------------------
-append_length(Sender) ->
+append_length(Sender) when is_list(Sender) ->
     sender_len(Sender)++Sender.
 
-sender_len([], Acc) ->
-    to_hexstr(Acc);
-sender_len([First,_|Rest], Acc) when First == $0->
-    sender_len(Rest, Acc+1);
-sender_len([_,_|Rest], Acc) ->
-    sender_len(Rest, Acc+2).
-
 sender_len(Sender) ->
-    sender_len(Sender, 0).
+    Len = length(Sender),
+    case lists:last(Sender) of
+        $0 ->  to_hexstr(Len - 1);
+        _ -> to_hexstr(Len)
+    end.
 
 %%--------------------------------------------------------------------
 %% Function for getting 8 last significant bits of number
@@ -333,6 +350,8 @@ ucp_split(L) ->
 %% Hex mangling utils
 %%--------------------------------------------------------------------
 
+
+-spec to_hexstr(binary() | integer() | list()) -> ascii().
 to_hexstr(Bin) when is_binary(Bin) ->
     to_hexstr(binary_to_list(Bin));
 
@@ -376,6 +395,16 @@ hexstr_to_list([], _Chunk, Acc) ->
 hexstr_to_list(H, Chunk, Acc) ->
     {L, R} = lists:split(Chunk, H),
     hexstr_to_list(R, Chunk, [erlang:list_to_integer(L, 16) | Acc]).
+
+prop_hex() ->
+    ?FORALL(X, dupa(),
+            begin
+                L = to_hexstr(X),
+                case is_binary(X) of
+                    true  -> X =:= hexstr_to_bin(L);
+                    false -> X =:= hexstr_to_list(L)
+                end
+            end).
 
 %%--------------------------------------------------------------------
 %% Reverse nibble encoding/decoding
@@ -462,3 +491,4 @@ hexstr_to_bin_test() ->
     ?assertEqual(<<121, 34, 18, 90, 52, 17>>, hexstr_to_bin("7922125A3411")).
 
 -endif.
+
